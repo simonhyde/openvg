@@ -1,5 +1,6 @@
 LIBFLAGS=-I/opt/vc/include -I/opt/vc/include/interface/vmcs_host/linux -I/opt/vc/include/interface/vcos/pthreads
-all:	libshapes.o oglinit.o gopenvg
+#all:	libshapes.o oglinit.o gopenvg
+all:	libshapes.o oglinit.o
 
 libshapes.o:	libshapes.c shapes.h fontinfo.h oglinit.o
 	gcc -O2  -Wall $(LIBFLAGS) -c libshapes.c
