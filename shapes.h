@@ -9,7 +9,7 @@ extern "C" {
 	extern void Shear(VGfloat, VGfloat);
 	extern void Scale(VGfloat, VGfloat);
 	extern void Text(VGfloat, VGfloat, const char *, Fontinfo, int);
-	extern void TextClip(VGfloat, VGfloat, const char *, Fontinfo, int, VGfloat);
+	extern void TextClip(VGfloat, VGfloat, const char *, Fontinfo, int, VGfloat, int clip_codepoint, int clip_count);
 	extern void TextMid(VGfloat, VGfloat, const char *, Fontinfo, int);
 	extern void TextEnd(VGfloat, VGfloat, const char *, Fontinfo, int);
 	extern VGfloat TextWidth(const char *, Fontinfo, int);

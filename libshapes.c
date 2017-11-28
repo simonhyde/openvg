@@ -453,34 +453,59 @@ unsigned char *next_utf8_char(unsigned char *utf8, int *codepoint) {
 
 // Text renders a string of text at a specified location, size, using the specified font glyphs
 // derived from http://web.archive.org/web/20070808195131/http://developer.hybrid.fi/font2openvg/renderFont.cpp.txt
-void TextClip(VGfloat x, VGfloat y, const char *s, Fontinfo f, int pointsize, VGfloat clipwidth) {
-	VGfloat size = (VGfloat) pointsize, w = 0, mm[9];
+void TextClip(VGfloat x, VGfloat y, const char *s, Fontinfo f, int pointsize, VGfloat clipwidth, int clip_codepoint, int clip_count) {
+	VGfloat size = (VGfloat) pointsize, xx = x, clip_x = clipwidth + x, mm[9];
 	vgGetMatrix(mm);
 	int character;
 	unsigned char *ss = (unsigned char *)s;
-	while ((ss = next_utf8_char(ss, &character)) != NULL) {
+	VGfloat clip_w = 0.0f;
+	VGfloat clip_char_w = 0.0f;
+	int clipglyph = -1;
+	if(clipwidth > 0.0f && clip_codepoint != 0)
+	{
+		clipglyph = f.CharacterMap[clip_codepoint];
+		if(clipglyph != -1)
+		{
+			clip_char_w = size * f.GlyphAdvances[clipglyph] / 65536.0f;
+			clip_w = clip_count * clip_char_w;
+		}
+	}
+	int clipped = FALSE;
+	while (!clipped && ((ss = next_utf8_char(ss, &character)) != NULL)) {
+		if(clipped < 0)
+			clipped = 0;
 		int glyph = f.CharacterMap[character];
 		if (glyph == -1) {
 			continue;			   //glyph is undefined
 		}
-		VGfloat next_w = w + size * f.GlyphAdvances[glyph] / 65536.0f;
-		if(clipwidth > 0.0f && next_w > clipwidth) {
-			break;				   //text is going to overflow clipwidth
+		VGfloat next_x = xx + size * f.GlyphAdvances[glyph] / 65536.0f;
+		if(clipwidth > 0.0f && (next_x + clip_w) > clip_x) {
+			//text is going to overflow clipwidth (or at least leave us without space for drawing clip_codepoint)
+			clipped = TRUE;
+			if(clipglyph == -1)
+				break;
+			glyph = clipglyph;
 		}
-		VGfloat mat[9] = {
-			size, 0.0f, 0.0f,
-			0.0f, size, 0.0f,
-			x + w, y, 1.0f
-		};
-		vgLoadMatrix(mm);
-		vgMultMatrix(mat);
-		vgDrawPath(f.Glyphs[glyph], VG_FILL_PATH);
-		w = next_w;
+		do
+		{
+			VGfloat mat[9] = {
+				size, 0.0f, 0.0f,
+				0.0f, size, 0.0f,
+				xx, y, 1.0f
+			};
+			vgLoadMatrix(mm);
+			vgMultMatrix(mat);
+			vgDrawPath(f.Glyphs[glyph], VG_FILL_PATH);
+			if(clipped)
+				next_x = xx + clip_char_w;
+			xx = next_x;
+		}
+		while(clipped && --clip_count > 0);
 	}
 	vgLoadMatrix(mm);
 }
 void Text(VGfloat x, VGfloat y, const char *s, Fontinfo f, int pointsize) {
-	TextClip(x,y,s,f,pointsize,-1);
+	TextClip(x,y,s,f,pointsize,-1,0,0);
 }
 
 // TextWidth returns the width of a text string at the specified font and size.
