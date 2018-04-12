@@ -451,6 +451,19 @@ unsigned char *next_utf8_char(unsigned char *utf8, int *codepoint) {
 	return p;
 }
 
+static int FixupChar(int character)
+{
+	//Replace various single quotes with apostrophie
+	if(character >= 0x2018 && character <= 0x201B)
+		character = 0x27;
+	//And double quotes
+	if(character >= 0x201C && character <= 0x201F)
+		character = 0x22;
+	if(character >= MAXFONTPATH || character < 0)
+		return -1;//Skip characters we can't draw
+	return character;
+}
+
 // Text renders a string of text at a specified location, size, using the specified font glyphs
 // derived from http://web.archive.org/web/20070808195131/http://developer.hybrid.fi/font2openvg/renderFont.cpp.txt
 void TextClip(VGfloat x, VGfloat y, const char *s, Fontinfo f, int pointsize, VGfloat clipwidth, int clip_codepoint, int clip_count) {
@@ -474,8 +487,11 @@ void TextClip(VGfloat x, VGfloat y, const char *s, Fontinfo f, int pointsize, VG
 	while (!clipped && ((ss = next_utf8_char(ss, &character)) != NULL)) {
 		if(clipped < 0)
 			clipped = 0;
+		character = FixupChar(character);
+		if(character < 0)
+			continue;//Skip characters we can't draw
 		int glyph = f.CharacterMap[character];
-		if (glyph == -1) {
+		if (glyph < 0 || glyph >= f.Count) {
 			continue;			   //glyph is undefined
 		}
 		VGfloat next_x = xx + size * f.GlyphAdvances[glyph] / 65536.0f;
@@ -515,8 +531,11 @@ VGfloat TextWidth(const char *s, Fontinfo f, int pointsize) {
 	int character;
 	unsigned char *ss = (unsigned char *)s;
 	while ((ss = next_utf8_char(ss, &character)) != NULL) {
+		character = FixupChar(character);
+		if(character == -1)
+			continue;
 		int glyph = f.CharacterMap[character];
-		if (glyph == -1) {
+		if (glyph < 0 || glyph >= f.Count) {
 			continue;			   //glyph is undefined
 		}
 		tw += size * f.GlyphAdvances[glyph] / 65536.0f;
