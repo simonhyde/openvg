@@ -19,6 +19,7 @@
 #include "DejaVuSansMono.inc"
 #include "eglstate.h"					   // data structures for graphics state
 #include "fontinfo.h"					   // font data structure
+#include "shapes.h"
 
 static STATE_T _state, *state = &_state;	// global graphics state
 static const int MAXFONTPATH = 500;
@@ -196,13 +197,22 @@ VGImage createImageFromJpeg(const char *filename) {
 	return img;
 }
 
+static void drawImageAt(VGImage img, VGfloat x, VGfloat y)
+{
+	vgSeti(VG_MATRIX_MODE, VG_MATRIX_IMAGE_USER_TO_SURFACE);
+	vgTranslate(x, y);
+	vgDrawImage(img);
+	vgTranslate(-x, -y);
+	vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
+}
+
 // makeimage makes an image from a raw raster of red, green, blue, alpha values
 void makeimage(VGfloat x, VGfloat y, int w, int h, const VGubyte * data) {
 	unsigned int dstride = w * 4;
 	VGImageFormat rgbaFormat = VG_sABGR_8888;
 	VGImage img = vgCreateImage(rgbaFormat, w, h, VG_IMAGE_QUALITY_BETTER);
 	vgImageSubData(img, (const void *)data, dstride, rgbaFormat, 0, 0, w, h);
-	vgSetPixels(x, y, img, 0, 0, w, h);
+	drawImageAt(img, x, y);
 	vgDestroyImage(img);
 }
 
@@ -291,21 +301,33 @@ void finish() {
 
 // Translate the coordinate system to x,y
 void Translate(VGfloat x, VGfloat y) {
+	vgSeti(VG_MATRIX_MODE, VG_MATRIX_IMAGE_USER_TO_SURFACE);
+	vgTranslate(x, y);
+	vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
 	vgTranslate(x, y);
 }
 
 // Rotate around angle r
 void Rotate(VGfloat r) {
+	vgSeti(VG_MATRIX_MODE, VG_MATRIX_IMAGE_USER_TO_SURFACE);
+	vgRotate(r);
+	vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
 	vgRotate(r);
 }
 
 // Shear shears the x coordinate by x degrees, the y coordinate by y degrees
 void Shear(VGfloat x, VGfloat y) {
+	vgSeti(VG_MATRIX_MODE, VG_MATRIX_IMAGE_USER_TO_SURFACE);
+	vgShear(x, y);
+	vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
 	vgShear(x, y);
 }
 
 // Scale scales by  x, y
 void Scale(VGfloat x, VGfloat y) {
+	vgSeti(VG_MATRIX_MODE, VG_MATRIX_IMAGE_USER_TO_SURFACE);
+	vgScale(x, y);
+	vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
 	vgScale(x, y);
 }
 
@@ -680,6 +702,9 @@ void Start(int width, int height) {
 	setfill(color);
 	setstroke(color);
 	StrokeWidth(0);
+	vgSeti(VG_MATRIX_MODE, VG_MATRIX_IMAGE_USER_TO_SURFACE);
+	vgLoadIdentity();
+	vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
 	vgLoadIdentity();
 }
 
