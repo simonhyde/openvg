@@ -10,8 +10,8 @@ libshapes.o:	libshapes.c shapes.h fontinfo.h fonts
 gopenvg:	openvg.go
 	go install .
 
-oglinit.o:	oglinit.c
-	gcc -O2 -Wall $(INCLUDEFLAGS) -c oglinit.c
+rpiinit.o:	rpiinit.c
+	gcc -O2 -Wall $(INCLUDEFLAGS) -c rpiinit.c
 
 font2openvg:	fontutil/font2openvg.cpp
 	g++ -I/usr/include/freetype2 fontutil/font2openvg.cpp -o font2openvg -lfreetype
@@ -29,10 +29,10 @@ DejaVuSansMono.inc: font2openvg $(FONTLIB)/DejaVuSansMono.ttf
 
 clean:
 	rm -f *.o *.inc *.so font2openvg *.c~ *.h~
-	indent -linux -c 60 -brf -l 132  libshapes.c oglinit.c shapes.h fontinfo.h
+	indent -linux -c 60 -brf -l 132  libshapes.c rpiinit.c shapes.h fontinfo.h
 
-library: oglinit.o libshapes.o
-	gcc $(LIBFLAGS) -shared -o libshapes.so oglinit.o libshapes.o
+library: rpiinit.o libshapes.o
+	gcc $(LIBFLAGS) -shared -o libshapes.so rpiinit.o libshapes.o
 
 install:
 	install -m 755 -p font2openvg /usr/bin/
