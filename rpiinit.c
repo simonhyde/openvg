@@ -2,6 +2,81 @@
 #include "eglstate.h"
 #include <bcm_host.h>
 #include <assert.h>
+#include <stdio.h>
+
+static DisplayFunc callback = NULL;
+static clock_t lastdraw = 0;
+
+static int loopRunning = 1;
+
+
+typedef struct
+{
+       // dispman window
+       DISPMANX_ELEMENT_HANDLE_T element;
+
+       // EGL data
+       EGLDisplay display;
+
+       EGLSurface surface;
+       EGLContext context;
+} GLSTATE_T;
+
+
+void setDisplayCallback(DisplayFunc new_callback)
+{
+	callback = new_callback;
+}
+
+void oglSwapBuffers(STATE_T * state)
+{
+       eglSwapBuffers(((GLSTATE_T *)state->platform)->display, ((GLSTATE_T *)state->platform)->surface);
+}
+
+void oglMainLoop()
+{
+	loopRunning = 1;
+	int firstPass =1;
+	while(loopRunning)
+	{
+		clock_t now;
+		now = clock();
+		if(firstPass)
+		{
+			lastdraw = now;
+			firstPass = 0;
+		}
+		unsigned long clockinterval = (unsigned long)now - lastdraw;
+		lastdraw = now;
+		float interval = ((float)clockinterval)/((float)CLOCKS_PER_SEC);
+		
+		if(callback)
+			(*callback) (interval);
+		else
+		{
+			fprintf(stderr, "No callback defined, aborting main loop\n");
+			break;
+		}
+	}
+}
+
+void oglfinish(STATE_T * _state)
+{
+	loopRunning = 0;//Stop any running callback loop
+	GLSTATE_T * state = (GLSTATE_T *)(_state->platform);
+
+	eglSwapBuffers(state->display, state->surface);
+	eglMakeCurrent(state->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+	eglDestroySurface(state->display, state->surface);
+	eglDestroyContext(state->display, state->context);
+	eglTerminate(state->display);
+}
+
+int oglNoError()
+{
+	return eglGetError() == EGL_SUCCESS;
+}
+
 
 // setWindowParams sets the window's position, adjusting if need be to
 // prevent it from going fully off screen. Also sets the dispman rects
@@ -68,10 +143,17 @@ static void setWindowParams(STATE_T * state, int x, int y, VC_RECT_T * src_rect,
 
 // oglinit sets the display, OpenVGL context and screen information
 // state holds the display information
-void oglinit(STATE_T * state) {
+void oglinit(int argc, char **argv, STATE_T * state) {
 	int32_t success = 0;
 	EGLBoolean result;
 	EGLint num_config;
+	if(state->platform == NULL)
+	{
+		state->platform = malloc(sizeof(GLSTATE_T));
+		memset(state->platform, 0, sizeof(GLSTATE_T));
+	}
+
+	GLSTATE_T * pstate = (GLSTATE_T *)(state->platform);
 
 	static EGL_DISPMANX_WINDOW_T nativewindow;
 
@@ -96,24 +178,26 @@ void oglinit(STATE_T * state) {
 
 	EGLConfig config;
 
+	bcm_host_init();
+
 	// get an EGL display connection
-	state->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-	assert(state->display != EGL_NO_DISPLAY);
+	pstate->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+	assert(pstate->display != EGL_NO_DISPLAY);
 
 	// initialize the EGL display connection
-	result = eglInitialize(state->display, NULL, NULL);
+	result = eglInitialize(pstate->display, NULL, NULL);
 	assert(EGL_FALSE != result);
 
 	// bind OpenVG API
 	eglBindAPI(EGL_OPENVG_API);
 
 	// get an appropriate EGL frame buffer configuration
-	result = eglChooseConfig(state->display, attribute_list, &config, 1, &num_config);
+	result = eglChooseConfig(pstate->display, attribute_list, &config, 1, &num_config);
 	assert(EGL_FALSE != result);
 
 	// create an EGL rendering context
-	state->context = eglCreateContext(state->display, config, EGL_NO_CONTEXT, NULL);
-	assert(state->context != EGL_NO_CONTEXT);
+	pstate->context = eglCreateContext(pstate->display, config, EGL_NO_CONTEXT, NULL);
+	assert(pstate->context != EGL_NO_CONTEXT);
 
 	// create an EGL window surface
 	success = graphics_get_display_size(0 /* LCD */ , &state->screen_width,
@@ -136,21 +220,21 @@ void oglinit(STATE_T * state) {
 						  &src_rect, DISPMANX_PROTECTION_NONE, &alpha, 0 /*clamp */ ,
 						  0 /*transform */ );
 
-	state->element = dispman_element;
+	pstate->element = dispman_element;
 	nativewindow.element = dispman_element;
 	nativewindow.width = state->window_width;
 	nativewindow.height = state->window_height;
 	vc_dispmanx_update_submit_sync(dispman_update);
 
-	state->surface = eglCreateWindowSurface(state->display, config, &nativewindow, NULL);
-	assert(state->surface != EGL_NO_SURFACE);
+	pstate->surface = eglCreateWindowSurface(pstate->display, config, &nativewindow, NULL);
+	assert(pstate->surface != EGL_NO_SURFACE);
 
 	// preserve the buffers on swap
-	result = eglSurfaceAttrib(state->display, state->surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED);
+	result = eglSurfaceAttrib(pstate->display, pstate->surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED);
 	assert(EGL_FALSE != result);
 
 	// connect the context to the surface
-	result = eglMakeCurrent(state->display, state->surface, state->surface, state->context);
+	result = eglMakeCurrent(pstate->display, pstate->surface, pstate->surface, pstate->context);
 	assert(EGL_FALSE != result);
 }
 
@@ -164,7 +248,7 @@ void dispmanMoveWindow(STATE_T * state, int x, int y) {
 
 	setWindowParams(state, x, y, &src_rect, &dst_rect);
 	dispman_update = vc_dispmanx_update_start(0);
-	vc_dispmanx_element_change_attributes(dispman_update, state->element, 0, 0, 0, &dst_rect, &src_rect, 0, DISPMANX_NO_ROTATE);
+	vc_dispmanx_element_change_attributes(dispman_update, ((GLSTATE_T*)(state->platform))->element, 0, 0, 0, &dst_rect, &src_rect, 0, DISPMANX_NO_ROTATE);
 	vc_dispmanx_update_submit_sync(dispman_update);
 }
 
@@ -178,6 +262,6 @@ void dispmanChangeWindowOpacity(STATE_T * state, uint32_t alpha) {
 
 	dispman_update = vc_dispmanx_update_start(0);
 	// The 1<<1 below means update the alpha value
-	vc_dispmanx_element_change_attributes(dispman_update, state->element, 1 << 1, 0, alpha, 0, 0, 0, DISPMANX_NO_ROTATE);
+	vc_dispmanx_element_change_attributes(dispman_update, ((GLSTATE_T*)(state->platform))->element, 1 << 1, 0, alpha, 0, 0, 0, DISPMANX_NO_ROTATE);
 	vc_dispmanx_update_submit_sync(dispman_update);
 }

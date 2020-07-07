@@ -1,0 +1,3 @@
+[submodule "ShivaVG"]
+	path = ShivaVG
+	url = https://github.com/simonhyde/ShivaVG.git
