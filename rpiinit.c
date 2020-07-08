@@ -3,11 +3,12 @@
 #include <bcm_host.h>
 #include <assert.h>
 #include <stdio.h>
+#include <sys/time.h>
 #include "key.c"
 
 static DisplayFunc callback = NULL;
 static KeyboardFunc keyCallback = NULL;
-static clock_t lastdraw = 0;
+static struct timeval lasttv;
 
 static int loopRunning = 1;
 
@@ -46,23 +47,23 @@ void oglMainLoop()
 	int firstPass =1;
 	while(loopRunning)
 	{
-		clock_t now;
-		now = clock();
+		struct timeval nowtv;
+		gettimeofday(&nowtv,NULL);
 		if(firstPass)
 		{
-			lastdraw = now;
+			lasttv = nowtv;
 			firstPass = 0;
 		}
-		unsigned long clockinterval = (unsigned long)now - lastdraw;
-		lastdraw = now;
-		float interval = ((float)clockinterval)/((float)CLOCKS_PER_SEC);
+		float interval = nowtv.tv_sec - lasttv.tv_sec;
+		interval += (nowtv.tv_usec - lasttv.tv_usec)/1000000.0;
+		lasttv = nowtv;
 		int character = 0;
 
 		if(loopRunning && keyPressed(&character) && keyCallback)
 			(*keyCallback) (character, 0, 0);
 		if(loopRunning && callback)
 			(*callback) (interval);
-		else
+		else if(!callback)
 		{
 			fprintf(stderr, "No callback defined, aborting main loop\n");
 			break;
