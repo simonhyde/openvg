@@ -12,6 +12,9 @@
 #include "fontinfo.h"
 #include "shapes.h"
 
+static int w, h, n, demo_secs;
+static char *s;
+
 // randcolor returns a random number 0..255
 unsigned int randcolor() {
 	return (unsigned int)(drand48() * 255.0);
@@ -43,10 +46,10 @@ void grid(VGfloat x, VGfloat y, int n, int w, int h) {
 	}
 }
 // gradient demos linear and radial gradients
-void gradient(int width, int height) {
+void gradient(float interval) {
 	VGfloat x1, y1, x2, y2, cx, cy, fx, fy, r;
-	VGfloat w = (VGfloat)width;
-	VGfloat h = (VGfloat)height;
+	VGfloat fw = (VGfloat)w;
+	VGfloat fh = (VGfloat)h;
 	VGfloat dotcolor[4] = {0, 0, 0, 0.3};
 	
 	
@@ -57,12 +60,12 @@ void gradient(int width, int height) {
 	};
 				
 	
-	x1 = w/8;
-	x2 = (w*3)/8;
-	y1 = h/3;
-	y2 = (h*2)/3;
-	cx = (w*3)/4;
-	cy = (h/2);
+	x1 = fw/8;
+	x2 = (fw*3)/8;
+	y1 = fh/3;
+	y2 = (fh*2)/3;
+	cx = (fw*3)/4;
+	cy = (fh/2);
 	r = (x2-x1);
 	fx = cx + (r/4);
 	fy = cy + (r/4);
@@ -146,7 +149,7 @@ void makepi(VGfloat x, VGfloat y, int w, int h) {
 }
 
 // raspi draws the raspberry pi, scaled to the screen dimensions
-void raspi(int w, int h, char *s) {
+void raspi(float interval) {
 	VGfloat midx = w / 2, midy = h / 2;
 	int rw = midx, rh = (rw * 2) / 3, fontsize = w * 0.03;
 
@@ -178,7 +181,7 @@ void fitwidth(int width, int adj, char *s, FW * f) {
 }
 
 // testpattern shows a test pattern 
-void testpattern(int w, int h, char *s) {
+void testpattern(float interval) {
 	VGfloat midx, midy1, midy2, midy3;
 	int fontsize = 256, h2 = h / 2;
 	FW tw1 = { MonoTypeface, 0, fontsize };
@@ -231,7 +234,7 @@ void textlines(VGfloat x, VGfloat y, char *s[], Fontinfo f, int fontsize, VGfloa
 }
 
 // tb draws a block of text
-void tb(int w, int h) {
+void tb(float interval) {
 	char *para[] = {
 		"For lo,",
 		"the winter is past,",
@@ -257,7 +260,7 @@ void tb(int w, int h) {
 	End();
 }
 
-void imagetest(int w, int h) {
+void imagetest(float interval) {
 	int imgw = 422, imgh = 238;
 	VGfloat cx = (w / 2) - (imgw / 2), cy = (h / 2) - (imgh / 2);
 	VGfloat ulx = 0, uly = h - imgh;
@@ -274,7 +277,7 @@ void imagetest(int w, int h) {
 	End();
 }
 
-void imagetable(int w, int h) {
+void imagetable(float interval) {
 	int imgw = 422, imgh = 238;
 	char *itable[] = {
 		"desert0.jpg",
@@ -316,7 +319,7 @@ void imagetable(int w, int h) {
 }
 
 // fontrange shows a range of fonts
-void fontrange(int w, int h) {
+void fontrange(float interval) {
 	int *s, sizes[] = { 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 21, 24, 36, 48, 60, 72, 96, 0 };
 	VGfloat x, y = h / 2, spacing = 50, s2 = spacing / 2, len, lx;
 	char num[4];
@@ -351,7 +354,9 @@ void fontrange(int w, int h) {
 }
 
 // refcard shows a reference card of shapes
-void refcard(int width, int height) {
+void refcard(float interval) {
+	int width = w;
+	int height = h;
 	char *shapenames[] = {
 		"Circle",
 		"Ellipse",
@@ -448,7 +453,7 @@ void refcard(int width, int height) {
 }
 
 // rotext draws text, rotated around the center of the screen, progressively faded
-void rotext(int w, int h, int n, char *s) {
+void rotext(float interval) {
 	VGfloat fade = (100.0 / (VGfloat) n) / 100.0;
 	VGfloat deg = 360.0 / n;
 	VGfloat x = w / 2, y = h / 2;
@@ -471,14 +476,19 @@ void rotext(int w, int h, int n, char *s) {
 // rseed seeds the random number generator from the random device
 void rseed(void) {
 	unsigned char d[sizeof(long int)];
-	long int s;
+	static long int s = 0;
 	int fd;
+	if(s != 0)
+	{
+		srand48(s);
+		return;
+	}
 
 	// read bytes from the random device,
 	// pack them into a long int.
 	fd = open("/dev/urandom", O_RDONLY);
 	if (fd < 0) {
-		srand48(1);
+		srand48(s = 1);
 		return;
 	}
 	read(fd, (void *)d, (size_t) sizeof(long int));
@@ -488,7 +498,9 @@ void rseed(void) {
 }
 
 // rshapes draws shapes with random colors, strokes, and sizes. 
-void rshapes(int width, int height, int n) {
+void rshapes(float interval) {
+	int width = w;
+	int height = h;
 	int i, j, np = 10;
 	VGfloat sx, sy, cx, cy, px, py, ex, ey, pox, poy;
 	VGfloat polyx[np], polyy[np];
@@ -548,7 +560,7 @@ void rshapes(int width, int height, int n) {
 }
 
 // sunearth shows the relative sizes of the sun and the earth
-void sunearth(int w, int h) {
+void sunearth(float interval) {
 	VGfloat sun, earth, x, y;
 	int i;
 
@@ -571,7 +583,7 @@ void sunearth(int w, int h) {
 }
 
 // advert is an ad for the package 
-void advert(int w, int h) {
+void advert(float interval) {
 	VGfloat y = h/4;
 	int fontsize = (w * 4) / 100;
 	char *s = "github.com/ajstarks/openvg";
@@ -591,68 +603,96 @@ void advert(int w, int h) {
 	End();
 }
 
+void cleanup()
+{
+	finish();
+	restoreterm();
+}
+
 // demo shows a timed demonstration
-void demo(int w, int h, int sec) {
-	refcard(w, h);
-	sleep(sec);
-	rshapes(w, h, 50);
-	sleep(sec);
-	testpattern(w, h, "OpenVG on RasPi");
-	sleep(sec);
-	imagetable(w, h);
-	sleep(sec);
-	rotext(w, h, 30, "Raspi");
-	sleep(sec);
-	tb(w, h);
-	sleep(sec);
-	fontrange(w, h);
-	sleep(sec);
-	sunearth(w, h);
-	sleep(sec);
-	raspi(w, h, "The Raspberry Pi");
-	sleep(sec);
-	gradient(w,h);
-	sleep(sec);
-	advert(w, h);
+void demo(float interval) {
+    static float elapsed = 0;
+    elapsed += interval;
+    switch(((int)elapsed)/demo_secs)
+    {
+	case 0:
+	    refcard(interval);
+	    break;
+	case 1:
+	    n = 50;
+	    rshapes(interval);
+	    break;
+	case 2:
+	    s = "OpenVG on RasPi";
+	    testpattern(interval);
+	    break;
+	case 3:
+	    imagetable(interval);
+	    break;
+	case 4:
+	    n = 30;
+	    s = "Raspi";
+	    rotext(interval);
+	    break;
+	case 5:
+	    tb(interval);
+	    break;
+	case 6:
+	    fontrange(interval);
+	    break;
+	case 7:
+	    sunearth(interval);
+	    break;
+	case 8:
+	    s = "The Raspberry Pi";
+	    raspi(interval);
+	    break;
+	case 9:
+	    gradient(interval);
+	    break;
+	case 10:
+	default:
+	    advert(interval);
+	    break;
+    }
 }
 
 // wait for a specific character 
-void waituntil(int endchar) {
-    int key;
+void keyCallback(unsigned char key, int x, int y) {
 
-    for (;;) {
-        key = getchar();
-        if (key == endchar || key == '\n') {
-            break;
-        }
+    if(key == 0x1b || key == '\n' || key == '\r')
+    {
+	cleanup();
     }
 }
+
 // main initializes the system and shows the picture. 
 // Exit and clean up when you hit [RETURN].
 int main(int argc, char **argv) {
-	int w, h, n;
 	char *usage =
 	    "%s [command]\n\tdemo sec\n\tastro\n\ttest ...\n\trand n\n\trotate n ...\n\timage\n\ttext\n\tfontsize\n\traspi\n\tadvert\n\tgradient\n";
 	char *progname = argv[0];
 	saveterm();
-	init(&w, &h);
+	init(&argc, argv, &w, &h);
 	rawterm();
+	DisplayFunc callback = NULL;
 	switch (argc) {
 	case 2:
 		if (strncmp(argv[1], "image", 5) == 0) {
-			imagetable(w, h);
+			callback = imagetable;
 		} else if (strncmp(argv[1], "text", 4) == 0) {
-			tb(w, h);
+			callback = tb;
 		} else if (strncmp(argv[1], "astro", 5) == 0) {
-			sunearth(w, h);
+			callback = sunearth;
 		} else if (strncmp(argv[1], "fontsize", 8) == 0) {
-			fontrange(w, h);
+			callback = fontrange;
 		} else if (strncmp(argv[1], "advert", 6) == 0) {
-			advert(w,h);
+			callback = advert;
 		} else if (strncmp(argv[1], "raspi", 5) == 0) {
-			raspi(w, h, "The Raspberry Pi");
+			s = "The Raspberry Pi";
+			callback = raspi;
 		} else if (strncmp(argv[1], "gradient", 8) == 0) {
-			gradient(w,h);
+			callback = gradient;
 		} else {
 			restoreterm();
 			fprintf(stderr, usage, progname);
@@ -665,14 +705,16 @@ int main(int argc, char **argv) {
 			if (n < 1 || n > 30) {
 				n = 5;
 			}
-			demo(w, h, n);
+			demo_secs = n;
+			callback = demo;
 		} else if (strncmp(argv[1], "rand", 4) == 0) {
 			if (n < 1 || n > 1000) {
 				n = 100;
 			}
-			rshapes(w, h, n);
+			callback = rshapes;
 		} else if (strncmp(argv[1], "test", 4) == 0) {
-			testpattern(w, h, argv[2]);
+			s = argv[2];
+			callback = testpattern;
 		} else {
 			restoreterm();
 			fprintf(stderr, usage, progname);
@@ -682,7 +724,9 @@ int main(int argc, char **argv) {
 
 	case 4:
 		if (strncmp(argv[1], "rotate", 6) == 0) {
-			rotext(w, h, atoi(argv[2]), argv[3]);
+			n = atoi(argv[2]);
+			s = argv[3];
+			callback = rotext;
 		} else {
 			restoreterm();
 			fprintf(stderr, usage, progname);
@@ -691,10 +735,8 @@ int main(int argc, char **argv) {
 		break;
 
 	default:
-		refcard(w, h);
+		callback = refcard;
 	}
-	waituntil(0x1b);
-	restoreterm();
-	finish();
+	MainLoop(callback,keyCallback);
 	return 0;
 }

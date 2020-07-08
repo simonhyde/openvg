@@ -1,11 +1,11 @@
-#include <GL/glut.h>
+#include <GL/freeglut.h>
 #include "eglstate.h"
 #include <assert.h>
 #include <VG/openvg.h>
 
-DisplayFunc callback = NULL;
-int lastdraw = 0;
-int timeinit = 0;//Really just a bool, but C doesn't do those...
+static DisplayFunc callback = NULL;
+static int lastdraw = 0;
+static int timeinit = 0;//Really just a bool, but C doesn't do those...
 
 //Callback from GLUT for every frame it wants to display
 void
@@ -36,6 +36,11 @@ void setDisplayCallback(DisplayFunc new_callback)
 	callback = new_callback;
 }
 
+void setKeyboardCallback(KeyboardFunc new_callback)
+{
+	glutKeyboardFunc(new_callback);
+}
+
 void oglSwapBuffers(STATE_T * state)
 {
 	glutSwapBuffers();
@@ -46,11 +51,17 @@ void oglMainLoop()
 	glutMainLoop();
 }
 
+void oglLeaveMainLoop()
+{
+	glutLeaveMainLoop();
+}
+
 void oglfinish(STATE_T * state)
 {
-	//TODO GLUT cleanup too
 	vgDestroyContextSH();
+	glutDestroyWindow((int)state->platform);
 }
+
 
 int oglNoError()
 {
@@ -69,9 +80,9 @@ callbackIdle(void)
 // oglinit sets the display, OpenVGL context and screen information
 // state holds the display information
 // In the new callback version, this is mostly a copy/paste from ShivaVG's testInit
-void oglinit(int argc, char **argv, STATE_T * state) {
+void oglinit(int *pargc, char **argv, STATE_T * state) {
 
-	glutInit(&argc, argv);
+	glutInit(pargc, argv);
 
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA |
 		       GLUT_STENCIL | GLUT_MULTISAMPLE);
@@ -89,7 +100,7 @@ void oglinit(int argc, char **argv, STATE_T * state) {
 
 	glutInitWindowPosition(state->window_x, state->window_y);
 	glutInitWindowSize(state->window_width, state->window_height);
-	glutCreateWindow("OpenVG");
+	state->platform = (void *)glutCreateWindow("OpenVG");
 
 	//glutReshapeFunc(testReshape);
 	glutDisplayFunc(callbackDisplay);

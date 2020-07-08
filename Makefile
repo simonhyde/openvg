@@ -15,7 +15,7 @@ libshapesOGL.o:	libshapes.c shapes.h fontinfo.h $(FONTFILES)
 gopenvg:	openvg.go
 	go install .
 
-rpiinit.o:	rpiinit.c eglstate.h
+rpiinit.o:	rpiinit.c eglstate.h key.c key.h
 	gcc -O2 -Wall $(INCLUDEFLAGS) -c rpiinit.c
 
 oglinit.o:	oglinit.c eglstate.h

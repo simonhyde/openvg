@@ -15,12 +15,11 @@ Here is the graphics equivalent of "hello, world"
 	#include "VG/vgu.h"
 	#include "fontinfo.h"
 	#include "shapes.h"
-	
-	int main() {
-		int width, height;
-		char s[3];
-	
-		init(&width, &height);					// Graphics initialization
+
+	int width, height;
+
+	void displayCallback(float interval)
+	{
 	
 		Start(width, height);					// Start the picture
 		Background(0, 0, 0);					// Black background
@@ -30,9 +29,18 @@ Here is the graphics equivalent of "hello, world"
 		TextMid(width / 2, height / 2, "hello, world", SerifTypeface, width / 10);	// Greetings 
 		End();						   			// End the picture
 	
-		fgets(s, 2, stdin);				   		// look at the pic, end with [RETURN]
-		finish();					            // Graphics cleanup
+	}
+
+	void keyCallback(unsigned char key, int x, int y)
+	{
+		//Quit whenever someone presses a key
+		finish();
 		exit(0);
+	}
+
+	int main(int argc, char **argv) {
+		init(&argc, argv, &width, &height);					// Graphics initialization
+		MainLoop(displayCallback, keyCallback);
 	}
 
 <a href="http://www.flickr.com/photos/ajstarks/7828969180/" title="hellovg by ajstarks, on Flickr"><img src="http://farm9.staticflickr.com/8436/7828969180_b73db3bf19.jpg" width="500" height="281" alt="hellovg"></a>
@@ -60,11 +68,13 @@ WindowPosition moves the window to given position
 
 ### Setup and shutdown
 
-	void init(int *w, int *h)
+	void init(int *argc, char **argv, int *w, int *h)
 Initialize the graphics: width and height of the canvas are returned.  This should begin every program.
 
 	void initWindowSize(int x, int y, unsigned int w, unsigned int h)
-Initialize with specific dimensions
+Initialize with specific dimensions (must be called before init())
+
+	void MainLoop(DisplayFunc displayCallback, KeyboardFunc keyCallback)	Run main graphics loop, with displayCallback called to draw every frame, and keyCallback called whenever a key is pressed, displayCallback shouldn't be NULL, but keyCallback can be
 
 	void finish() 
 Shutdown the graphics. This should end every program.

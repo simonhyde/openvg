@@ -13,16 +13,19 @@ typedef struct {
 } STATE_T;
 
 
-extern void oglinit(int argc, char **argv, STATE_T *);
+extern void oglinit(int *pargc, char **argv, STATE_T *);
 extern void dispmanMoveWindow(STATE_T *, int, int);
 extern void dispmanChangeWindowOpacity(STATE_T *, unsigned int);
 
 extern void setDisplayCallback(DisplayFunc callback);
+extern void setKeyboardCallback(KeyboardFunc callback);
 
 extern void oglSwapBuffers(STATE_T *);
 
 extern void oglMainLoop();
+extern void oglLeaveMainLoop();
 
 extern void oglfinish(STATE_T *);
 
 extern int oglNoError();
+

@@ -35,10 +35,16 @@ static unsigned int init_h = 0;
 struct termios new_term_attr;
 struct termios orig_term_attr;
 
-void MainLoop(DisplayFunc callback)
+void MainLoop(DisplayFunc callback, KeyboardFunc keyCallback)
 {
 	setDisplayCallback(callback);
+	setKeyboardCallback(keyCallback);
 	oglMainLoop();
+}
+
+void LeaveMainLoop()
+{
+	oglLeaveMainLoop();
 }
 
 // saveterm saves the current terminal settings
@@ -225,7 +231,7 @@ void makeimage(VGfloat x, VGfloat y, int w, int h, const VGubyte * data) {
 // Image places an image at the specifed location
 void Image(VGfloat x, VGfloat y, int w, int h, const char *filename) {
 	VGImage img = createImageFromJpeg(filename);
-	vgSetPixels(x, y, img, 0, 0, w, h);
+	drawImageAt(img, x, y);
 	vgDestroyImage(img);
 }
 
@@ -250,14 +256,14 @@ void initWindowSize(int x, int y, unsigned int w, unsigned int h) {
 }
 
 // init sets the system to its initial state
-void init(int argc, char **argv, int *w, int *h) {
+void init(int *pargc, char **argv, int *w, int *h) {
 	memset(state, 0, sizeof(*state));
 	state->window_x = init_x;
 	state->window_y = init_y;
 	state->window_width = init_w;
 	state->window_height = init_h;
 	state->platform = NULL;
-	oglinit(argc, argv, state);
+	oglinit(pargc, argv, state);
 	SansTypeface = loadfont(DejaVuSans_glyphPoints,
 				DejaVuSans_glyphPointIndices,
 				DejaVuSans_glyphInstructions,

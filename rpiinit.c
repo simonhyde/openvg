@@ -3,8 +3,10 @@
 #include <bcm_host.h>
 #include <assert.h>
 #include <stdio.h>
+#include "key.c"
 
 static DisplayFunc callback = NULL;
+static KeyboardFunc keyCallback = NULL;
 static clock_t lastdraw = 0;
 
 static int loopRunning = 1;
@@ -22,6 +24,11 @@ typedef struct
        EGLContext context;
 } GLSTATE_T;
 
+
+void setKeyboardCallback(KeyboardFunc new_callback)
+{
+	keyCallback = new_callback;
+}
 
 void setDisplayCallback(DisplayFunc new_callback)
 {
@@ -49,8 +56,11 @@ void oglMainLoop()
 		unsigned long clockinterval = (unsigned long)now - lastdraw;
 		lastdraw = now;
 		float interval = ((float)clockinterval)/((float)CLOCKS_PER_SEC);
-		
-		if(callback)
+		int character = 0;
+
+		if(loopRunning && keyPressed(&character) && keyCallback)
+			(*keyCallback) (character, 0, 0);
+		if(loopRunning && callback)
 			(*callback) (interval);
 		else
 		{
@@ -58,6 +68,11 @@ void oglMainLoop()
 			break;
 		}
 	}
+}
+
+void oglLeaveMainLoop()
+{
+	loopRunning = 0;
 }
 
 void oglfinish(STATE_T * _state)
@@ -70,6 +85,7 @@ void oglfinish(STATE_T * _state)
 	eglDestroySurface(state->display, state->surface);
 	eglDestroyContext(state->display, state->context);
 	eglTerminate(state->display);
+	keyboardReset();
 }
 
 int oglNoError()
@@ -143,7 +159,7 @@ static void setWindowParams(STATE_T * state, int x, int y, VC_RECT_T * src_rect,
 
 // oglinit sets the display, OpenVGL context and screen information
 // state holds the display information
-void oglinit(int argc, char **argv, STATE_T * state) {
+void oglinit(int *pargc, char **argv, STATE_T * state) {
 	int32_t success = 0;
 	EGLBoolean result;
 	EGLint num_config;

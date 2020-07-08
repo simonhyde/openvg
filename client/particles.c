@@ -32,6 +32,8 @@ typedef struct particle {
 
 particle_t particles[NUM_PARTICLES];
 
+static int w, h;
+
 int showTrails = 0;
 int directionRTL = 0;
 int alternate = 1;
@@ -67,10 +69,17 @@ void paintBG(int w, int h) {
 	Rect(0, 0, w, h);
 }
 
-void draw(int w, int h) {
+void draw(float interval) {
+	static int pass = 0;
 	int i;
 	particle_t *p;
 
+	pass++;
+	// Change launch direction every 100 draws
+	if (alternate && pass == 100) {
+		directionRTL = directionRTL ? 0 : 1;
+		pass = 0;
+	}
 	paintBG(w, h);
 
 	for (i = 0; i < NUM_PARTICLES; i++) {
@@ -156,25 +165,15 @@ void setOptions(int argc, char **argv) {
 int main(int argc, char **argv) {
 	srand(time(NULL));
 
+
+	init(&argc, argv, &w, &h);
+
 	setOptions(argc, argv);
 
-	int w, h;
-	init(&w, &h);
 	initParticles(w, h);
 
 	Start(w, h);
+	
+	MainLoop(draw, NULL);
 
-	int i = 0;
-	while (1) {
-		draw(w, h);
-
-		// NOTE: Consider a `usleep()` in here to not tie up the CPU if you intend serious use
-
-		// Change launch direction every 100 draws
-		i++;
-		if (alternate && i == 100) {
-			directionRTL = directionRTL ? 0 : 1;
-			i = 0;
-		}
-	}
 }
