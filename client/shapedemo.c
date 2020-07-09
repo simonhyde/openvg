@@ -45,63 +45,60 @@ void grid(VGfloat x, VGfloat y, int n, int w, int h) {
 		Line(x, iy, x + w, iy);
 	}
 }
+
 // gradient demos linear and radial gradients
 void gradient(float interval) {
 	VGfloat x1, y1, x2, y2, cx, cy, fx, fy, r;
-	VGfloat fw = (VGfloat)w;
-	VGfloat fh = (VGfloat)h;
-	VGfloat dotcolor[4] = {0, 0, 0, 0.3};
-	
-	
+	VGfloat fw = (VGfloat) w;
+	VGfloat fh = (VGfloat) h;
+	VGfloat dotcolor[4] = { 0, 0, 0, 0.3 };
+
 	VGfloat stops[] = {
 		0.0, 1.0, 1.0, 1.0, 1.0,
 		0.5, 0.5, 0.5, 0.5, 1.0,
 		1.0, 0.0, 0.0, 0.0, 1.0
 	};
-				
-	
-	x1 = fw/8;
-	x2 = (fw*3)/8;
-	y1 = fh/3;
-	y2 = (fh*2)/3;
-	cx = (fw*3)/4;
-	cy = (fh/2);
-	r = (x2-x1);
-	fx = cx + (r/4);
-	fy = cy + (r/4);
+
+	x1 = fw / 8;
+	x2 = (fw * 3) / 8;
+	y1 = fh / 3;
+	y2 = (fh * 2) / 3;
+	cx = (fw * 3) / 4;
+	cy = (fh / 2);
+	r = (x2 - x1);
+	fx = cx + (r / 4);
+	fy = cy + (r / 4);
 	Start(w, h);
 	Background(128, 128, 128);
-	
 
 	FillLinearGradient(x1, y1, x2, y2, stops, 3);
-	Rect(x1, y1, x2-x1, y2-y1);
+	Rect(x1, y1, x2 - x1, y2 - y1);
 	FillRadialGradient(cx, cy, fx, fy, r, stops, 3);
 	Circle(cx, cy, r);
-	
+
 	RGBA(.5, 0, 0, 0.3, dotcolor);
 	setfill(dotcolor);
 	Circle(x1, y1, 10);
 	Circle(x2, y2, 10);
 	Circle(cx, cy, 10);
-	Circle(cx+r/2, cy, 10);
+	Circle(cx + r / 2, cy, 10);
 	Circle(fx, fy, 10);
-	
-	RGB(0,0,0,dotcolor);
+
+	RGB(0, 0, 0, dotcolor);
 	setfill(dotcolor);
-	TextMid(x1, y1-20, "(x1, y1)", SansTypeface, 18);
-	TextMid(x2, y2+10, "(x2, y2)", SansTypeface, 18);
+	TextMid(x1, y1 - 20, "(x1, y1)", SansTypeface, 18);
+	TextMid(x2, y2 + 10, "(x2, y2)", SansTypeface, 18);
 	TextMid(cx, cy, "(cx, cy)", SansTypeface, 18);
 	TextMid(fx, fy, "(fx, fy)", SansTypeface, 18);
-	TextEnd(cx+(r/2)+20, cy, "r", SansTypeface, 18);
-	
-	
-	TextMid(x1+((x2-x1)/2), h/6, "Linear Gradient", SansTypeface, 36);
-	TextMid(cx, h/6, "Radial Gradient", SansTypeface, 36);
-	
-	
+	TextEnd(cx + (r / 2) + 20, cy, "r", SansTypeface, 18);
+
+	TextMid(x1 + ((x2 - x1) / 2), h / 6, "Linear Gradient", SansTypeface, 36);
+	TextMid(cx, h / 6, "Radial Gradient", SansTypeface, 36);
+
 	End();
 
 }
+
 // makepi draws the Raspberry Pi
 void makepi(VGfloat x, VGfloat y, int w, int h) {
 	// dimensions
@@ -478,12 +475,10 @@ void rseed(void) {
 	unsigned char d[sizeof(long int)];
 	static long int s = 0;
 	int fd;
-	if(s != 0)
-	{
+	if (s != 0) {
 		srand48(s);
 		return;
 	}
-
 	// read bytes from the random device,
 	// pack them into a long int.
 	fd = open("/dev/urandom", O_RDONLY);
@@ -491,7 +486,7 @@ void rseed(void) {
 		srand48(s = 1);
 		return;
 	}
-	read(fd, (void *)d, (size_t) sizeof(long int));
+	read(fd, (void *)d, (size_t)sizeof(long int));
 	s = d[3] | (d[2] << 8) | (d[1] << 16) | (d[0] << 24);
 	srand48(s);
 	close(fd);
@@ -584,15 +579,15 @@ void sunearth(float interval) {
 
 // advert is an ad for the package 
 void advert(float interval) {
-	VGfloat y = h/4;
+	VGfloat y = h / 4;
 	int fontsize = (w * 4) / 100;
 	char *s = "github.com/ajstarks/openvg";
 	char *a = "ajstarks@gmail.com";
-	int imw = 110, imh = 110, rw = w/4, rh = (rw*2/3);
+	int imw = 110, imh = 110, rw = w / 4, rh = (rw * 2 / 3);
 	VGfloat tw = TextWidth(s, SansTypeface, fontsize);
 
 	Start(w, h);
-	makepi((w/2) - (rw/2), h/2, rw, rh);
+	makepi((w / 2) - (rw / 2), h / 2, rw, rh);
 	Fill(128, 0, 0, 1);
 	Text(w / 2 - (tw / 2), y - (fontsize / 4), s, SansTypeface, fontsize);
 	y -= 100;
@@ -603,67 +598,64 @@ void advert(float interval) {
 	End();
 }
 
-void cleanup()
-{
+void cleanup() {
 	finish();
 	restoreterm();
 }
 
 // demo shows a timed demonstration
 void demo(float interval) {
-    static float elapsed = 0;
-    elapsed += interval;
-    switch(((int)elapsed)/demo_secs)
-    {
+	static float elapsed = 0;
+	elapsed += interval;
+	switch (((int)elapsed) / demo_secs) {
 	case 0:
-	    refcard(interval);
-	    break;
+		refcard(interval);
+		break;
 	case 1:
-	    n = 50;
-	    rshapes(interval);
-	    break;
+		n = 50;
+		rshapes(interval);
+		break;
 	case 2:
-	    s = "OpenVG on RasPi";
-	    testpattern(interval);
-	    break;
+		s = "OpenVG on RasPi";
+		testpattern(interval);
+		break;
 	case 3:
-	    imagetable(interval);
-	    break;
+		imagetable(interval);
+		break;
 	case 4:
-	    n = 30;
-	    s = "Raspi";
-	    rotext(interval);
-	    break;
+		n = 30;
+		s = "Raspi";
+		rotext(interval);
+		break;
 	case 5:
-	    tb(interval);
-	    break;
+		tb(interval);
+		break;
 	case 6:
-	    fontrange(interval);
-	    break;
+		fontrange(interval);
+		break;
 	case 7:
-	    sunearth(interval);
-	    break;
+		sunearth(interval);
+		break;
 	case 8:
-	    s = "The Raspberry Pi";
-	    raspi(interval);
-	    break;
+		s = "The Raspberry Pi";
+		raspi(interval);
+		break;
 	case 9:
-	    gradient(interval);
-	    break;
+		gradient(interval);
+		break;
 	case 10:
 	default:
-	    advert(interval);
-	    break;
-    }
+		advert(interval);
+		break;
+	}
 }
 
 // wait for a specific character 
 void keyCallback(unsigned char key, int x, int y) {
 
-    if(key == 0x1b || key == '\n' || key == '\r')
-    {
-	cleanup();
-    }
+	if (key == 0x1b || key == '\n' || key == '\r') {
+		cleanup();
+	}
 }
 
 // main initializes the system and shows the picture. 
@@ -737,6 +729,6 @@ int main(int argc, char **argv) {
 	default:
 		callback = refcard;
 	}
-	MainLoop(callback,keyCallback);
+	MainLoop(callback, keyCallback);
 	return 0;
 }

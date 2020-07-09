@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-	typedef void (*DisplayFunc) (float interval);
-	typedef void (*KeyboardFunc) (unsigned char key, int x, int y);
+	typedef void (*DisplayFunc)(float interval);
+	typedef void (*KeyboardFunc)(unsigned char key, int x, int y);
 	extern void MainLoop(DisplayFunc callback, KeyboardFunc keyCallback);
 	extern void LeaveMainLoop();
 	extern void Translate(VGfloat, VGfloat);
@@ -34,7 +34,7 @@ extern "C" {
 	extern void SaveEnd(const char *);
 	extern void Background(unsigned int, unsigned int, unsigned int);
 	extern void BackgroundRGB(unsigned int, unsigned int, unsigned int, VGfloat);
-	extern void init(int *, char**, int *, int *);
+	extern void init(int *, char **, int *, int *);
 	extern void finish();
 	extern void setfill(VGfloat[4]);
 	extern void setstroke(VGfloat[4]);

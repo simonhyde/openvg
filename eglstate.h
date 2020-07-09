@@ -9,9 +9,8 @@ typedef struct {
 	int32_t window_y;
 	uint32_t window_width;
 	uint32_t window_height;
-	void * platform;
+	void *platform;
 } STATE_T;
-
 
 extern void oglinit(int *pargc, char **argv, STATE_T *);
 extern void dispmanMoveWindow(STATE_T *, int, int);
@@ -28,4 +27,3 @@ extern void oglLeaveMainLoop();
 extern void oglfinish(STATE_T *);
 
 extern int oglNoError();
-

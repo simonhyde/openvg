@@ -12,74 +12,62 @@ static struct timeval lasttv;
 
 static int loopRunning = 1;
 
+typedef struct {
+	// dispman window
+	DISPMANX_ELEMENT_HANDLE_T element;
 
-typedef struct
-{
-       // dispman window
-       DISPMANX_ELEMENT_HANDLE_T element;
+	// EGL data
+	EGLDisplay display;
 
-       // EGL data
-       EGLDisplay display;
-
-       EGLSurface surface;
-       EGLContext context;
+	EGLSurface surface;
+	EGLContext context;
 } GLSTATE_T;
 
-
-void setKeyboardCallback(KeyboardFunc new_callback)
-{
+void setKeyboardCallback(KeyboardFunc new_callback) {
 	keyCallback = new_callback;
 }
 
-void setDisplayCallback(DisplayFunc new_callback)
-{
+void setDisplayCallback(DisplayFunc new_callback) {
 	callback = new_callback;
 }
 
-void oglSwapBuffers(STATE_T * state)
-{
-       eglSwapBuffers(((GLSTATE_T *)state->platform)->display, ((GLSTATE_T *)state->platform)->surface);
+void oglSwapBuffers(STATE_T * state) {
+	eglSwapBuffers(((GLSTATE_T *) state->platform)->display, ((GLSTATE_T *) state->platform)->surface);
 }
 
-void oglMainLoop()
-{
+void oglMainLoop() {
 	loopRunning = 1;
-	int firstPass =1;
-	while(loopRunning)
-	{
+	int firstPass = 1;
+	while (loopRunning) {
 		struct timeval nowtv;
-		gettimeofday(&nowtv,NULL);
-		if(firstPass)
-		{
+		gettimeofday(&nowtv, NULL);
+		if (firstPass) {
 			lasttv = nowtv;
 			firstPass = 0;
 		}
 		float interval = nowtv.tv_sec - lasttv.tv_sec;
-		interval += (nowtv.tv_usec - lasttv.tv_usec)/1000000.0;
+		interval += (nowtv.tv_usec - lasttv.tv_usec) / 1000000.0;
 		lasttv = nowtv;
 		int character = 0;
 
-		if(loopRunning && keyPressed(&character) && keyCallback)
+		if (loopRunning && keyPressed(&character) && keyCallback)
 			(*keyCallback) (character, 0, 0);
-		if(loopRunning && callback)
+		if (loopRunning && callback)
 			(*callback) (interval);
-		else if(!callback)
-		{
+		else if (!callback) {
 			fprintf(stderr, "No callback defined, aborting main loop\n");
 			break;
 		}
 	}
 }
 
-void oglLeaveMainLoop()
-{
+void oglLeaveMainLoop() {
 	loopRunning = 0;
 }
 
-void oglfinish(STATE_T * _state)
-{
-	loopRunning = 0;//Stop any running callback loop
-	GLSTATE_T * state = (GLSTATE_T *)(_state->platform);
+void oglfinish(STATE_T * _state) {
+	loopRunning = 0;				   //Stop any running callback loop
+	GLSTATE_T *state = (GLSTATE_T *) (_state->platform);
 
 	eglSwapBuffers(state->display, state->surface);
 	eglMakeCurrent(state->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
@@ -89,11 +77,9 @@ void oglfinish(STATE_T * _state)
 	keyboardReset();
 }
 
-int oglNoError()
-{
+int oglNoError() {
 	return eglGetError() == EGL_SUCCESS;
 }
-
 
 // setWindowParams sets the window's position, adjusting if need be to
 // prevent it from going fully off screen. Also sets the dispman rects
@@ -164,13 +150,12 @@ void oglinit(int *pargc, char **argv, STATE_T * state) {
 	int32_t success = 0;
 	EGLBoolean result;
 	EGLint num_config;
-	if(state->platform == NULL)
-	{
+	if (state->platform == NULL) {
 		state->platform = malloc(sizeof(GLSTATE_T));
 		memset(state->platform, 0, sizeof(GLSTATE_T));
 	}
 
-	GLSTATE_T * pstate = (GLSTATE_T *)(state->platform);
+	GLSTATE_T *pstate = (GLSTATE_T *) (state->platform);
 
 	static EGL_DISPMANX_WINDOW_T nativewindow;
 
@@ -265,7 +250,8 @@ void dispmanMoveWindow(STATE_T * state, int x, int y) {
 
 	setWindowParams(state, x, y, &src_rect, &dst_rect);
 	dispman_update = vc_dispmanx_update_start(0);
-	vc_dispmanx_element_change_attributes(dispman_update, ((GLSTATE_T*)(state->platform))->element, 0, 0, 0, &dst_rect, &src_rect, 0, DISPMANX_NO_ROTATE);
+	vc_dispmanx_element_change_attributes(dispman_update, ((GLSTATE_T *) (state->platform))->element, 0, 0, 0, &dst_rect,
+					      &src_rect, 0, DISPMANX_NO_ROTATE);
 	vc_dispmanx_update_submit_sync(dispman_update);
 }
 
@@ -279,6 +265,7 @@ void dispmanChangeWindowOpacity(STATE_T * state, uint32_t alpha) {
 
 	dispman_update = vc_dispmanx_update_start(0);
 	// The 1<<1 below means update the alpha value
-	vc_dispmanx_element_change_attributes(dispman_update, ((GLSTATE_T*)(state->platform))->element, 1 << 1, 0, alpha, 0, 0, 0, DISPMANX_NO_ROTATE);
+	vc_dispmanx_element_change_attributes(dispman_update, ((GLSTATE_T *) (state->platform))->element, 1 << 1, 0, alpha, 0, 0, 0,
+					      DISPMANX_NO_ROTATE);
 	vc_dispmanx_update_submit_sync(dispman_update);
 }

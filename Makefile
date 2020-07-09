@@ -36,7 +36,7 @@ DejaVuSansMono.inc: font2openvg $(FONTLIB)/DejaVuSansMono.ttf
 
 clean:
 	rm -f *.o *.inc *.so font2openvg *.c~ *.h~
-	indent -linux -c 60 -brf -l 132  libshapes.c rpiinit.c shapes.h fontinfo.h
+	indent -linux -c 60 -brf -l 132  libshapes.c rpiinit.c oglinit.c shapes.h fontinfo.h eglstate.h
 
 library: libshapes.so libshapesOGL.so
 

@@ -35,15 +35,13 @@ static unsigned int init_h = 0;
 struct termios new_term_attr;
 struct termios orig_term_attr;
 
-void MainLoop(DisplayFunc callback, KeyboardFunc keyCallback)
-{
+void MainLoop(DisplayFunc callback, KeyboardFunc keyCallback) {
 	setDisplayCallback(callback);
 	setKeyboardCallback(keyCallback);
 	oglMainLoop();
 }
 
-void LeaveMainLoop()
-{
+void LeaveMainLoop() {
 	oglLeaveMainLoop();
 }
 
@@ -209,8 +207,7 @@ VGImage createImageFromJpeg(const char *filename) {
 	return img;
 }
 
-static void drawImageAt(VGImage img, VGfloat x, VGfloat y)
-{
+static void drawImageAt(VGImage img, VGfloat x, VGfloat y) {
 	vgSeti(VG_MATRIX_MODE, VG_MATRIX_IMAGE_USER_TO_SURFACE);
 	vgTranslate(x, y);
 	vgDrawImage(img);
@@ -339,20 +336,17 @@ void Scale(VGfloat x, VGfloat y) {
 	vgScale(x, y);
 }
 
-typedef enum
-{
+typedef enum {
 	PAINT_OBJECT_FILL = 0,
 	PAINT_OBJECT_STROKE = 1,
 	PAINT_OBJECT_LG = 2,
 	PAINT_OBJECT_RG = 3,
 } PaintObjectID;
 
-static VGPaint _paintObjects[4] = {0,0,0,0};
+static VGPaint _paintObjects[4] = { 0, 0, 0, 0 };
 
-static VGPaint getPaintObject(PaintObjectID id, int type)
-{
-	if(_paintObjects[id] == 0)
-	{
+static VGPaint getPaintObject(PaintObjectID id, int type) {
+	if (_paintObjects[id] == 0) {
 		_paintObjects[id] = vgCreatePaint();
 		vgSetParameteri(_paintObjects[id], VG_PAINT_TYPE, type);
 	}
@@ -478,7 +472,7 @@ unsigned char *next_utf8_char(unsigned char *utf8, int *codepoint) {
 		return NULL;
 	}
 	if (!(utf8[0] & 0x80)) {			   // 0xxxxxxx
-		*codepoint = (wchar_t) utf8[0];
+		*codepoint = (wchar_t)utf8[0];
 		seqlen = 1;
 	} else if ((utf8[0] & 0xE0) == 0xC0) {		   // 110xxxxx 
 		*codepoint = (int)(((utf8[0] & 0x1F) << 6) | (utf8[1] & 0x3F));
@@ -493,16 +487,15 @@ unsigned char *next_utf8_char(unsigned char *utf8, int *codepoint) {
 	return p;
 }
 
-static int FixupChar(int character)
-{
+static int FixupChar(int character) {
 	//Replace various single quotes with apostrophie
-	if(character >= 0x2018 && character <= 0x201B)
+	if (character >= 0x2018 && character <= 0x201B)
 		character = 0x27;
 	//And double quotes
-	if(character >= 0x201C && character <= 0x201F)
+	if (character >= 0x201C && character <= 0x201F)
 		character = 0x22;
-	if(character >= MAXFONTPATH || character < 0)
-		return -1;//Skip characters we can't draw
+	if (character >= MAXFONTPATH || character < 0)
+		return -1;				   //Skip characters we can't draw
 	return character;
 }
 
@@ -516,36 +509,33 @@ void TextClip(VGfloat x, VGfloat y, const char *s, Fontinfo f, int pointsize, VG
 	VGfloat clip_w = 0.0f;
 	VGfloat clip_char_w = 0.0f;
 	int clipglyph = -1;
-	if(clipwidth > 0.0f && clip_codepoint != 0)
-	{
+	if (clipwidth > 0.0f && clip_codepoint != 0) {
 		clipglyph = f.CharacterMap[clip_codepoint];
-		if(clipglyph != -1)
-		{
+		if (clipglyph != -1) {
 			clip_char_w = size * f.GlyphAdvances[clipglyph] / 65536.0f;
 			clip_w = clip_count * clip_char_w;
 		}
 	}
 	int clipped = FALSE;
 	while (!clipped && ((ss = next_utf8_char(ss, &character)) != NULL)) {
-		if(clipped < 0)
+		if (clipped < 0)
 			clipped = 0;
 		character = FixupChar(character);
-		if(character < 0)
-			continue;//Skip characters we can't draw
+		if (character < 0)
+			continue;			   //Skip characters we can't draw
 		int glyph = f.CharacterMap[character];
 		if (glyph < 0 || glyph >= f.Count) {
 			continue;			   //glyph is undefined
 		}
 		VGfloat next_x = xx + size * f.GlyphAdvances[glyph] / 65536.0f;
-		if(clipwidth > 0.0f && (next_x + clip_w) > clip_x) {
+		if (clipwidth > 0.0f && (next_x + clip_w) > clip_x) {
 			//text is going to overflow clipwidth (or at least leave us without space for drawing clip_codepoint)
 			clipped = TRUE;
-			if(clipglyph == -1)
+			if (clipglyph == -1)
 				break;
 			glyph = clipglyph;
 		}
-		do
-		{
+		do {
 			VGfloat mat[9] = {
 				size, 0.0f, 0.0f,
 				0.0f, size, 0.0f,
@@ -554,16 +544,16 @@ void TextClip(VGfloat x, VGfloat y, const char *s, Fontinfo f, int pointsize, VG
 			vgLoadMatrix(mm);
 			vgMultMatrix(mat);
 			vgDrawPath(f.Glyphs[glyph], VG_FILL_PATH);
-			if(clipped)
+			if (clipped)
 				next_x = xx + clip_char_w;
 			xx = next_x;
 		}
-		while(clipped && --clip_count > 0);
+		while (clipped && --clip_count > 0);
 	}
 	vgLoadMatrix(mm);
 }
 void Text(VGfloat x, VGfloat y, const char *s, Fontinfo f, int pointsize) {
-	TextClip(x,y,s,f,pointsize,-1,0,0);
+	TextClip(x, y, s, f, pointsize, -1, 0, 0);
 }
 
 // TextWidth returns the width of a text string at the specified font and size.
@@ -574,7 +564,7 @@ VGfloat TextWidth(const char *s, Fontinfo f, int pointsize) {
 	unsigned char *ss = (unsigned char *)s;
 	while ((ss = next_utf8_char(ss, &character)) != NULL) {
 		character = FixupChar(character);
-		if(character == -1)
+		if (character == -1)
 			continue;
 		int glyph = f.CharacterMap[character];
 		if (glyph < 0 || glyph >= f.Count) {

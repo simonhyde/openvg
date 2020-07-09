@@ -5,77 +5,61 @@
 
 static DisplayFunc callback = NULL;
 static int lastdraw = 0;
-static int timeinit = 0;//Really just a bool, but C doesn't do those...
+static int timeinit = 0;	//Really just a bool, but C doesn't do those...
 
 //Callback from GLUT for every frame it wants to display
-void
-callbackDisplay(void)
-{
-   /* Get interval from last redraw */
-   int now = glutGet(GLUT_ELAPSED_TIME);
-   if (!timeinit)
-   {
-      lastdraw = now;
-      timeinit = 1;
-   }
-   unsigned int msinterval = (unsigned int) (now - lastdraw);
-   float interval = (float) msinterval / 1000;
-   lastdraw = now;
+void callbackDisplay(void) {
+	/* Get interval from last redraw */
+	int now = glutGet(GLUT_ELAPSED_TIME);
+	if (!timeinit) {
+		lastdraw = now;
+		timeinit = 1;
+	}
+	unsigned int msinterval = (unsigned int)(now - lastdraw);
+	float interval = (float)msinterval / 1000;
+	lastdraw = now;
 
-   /* Draw scene */
-   if (callback)
-      (*callback) (interval);
+	/* Draw scene */
+	if (callback)
+		(*callback) (interval);
 
-   //Don't do swap here, it's done by the user calling End()
-   //glutSwapBuffers();
+	//Don't do swap here, it's done by the user calling End()
+	//glutSwapBuffers();
 
 }
 
-void setDisplayCallback(DisplayFunc new_callback)
-{
+void setDisplayCallback(DisplayFunc new_callback) {
 	callback = new_callback;
 }
 
-void setKeyboardCallback(KeyboardFunc new_callback)
-{
+void setKeyboardCallback(KeyboardFunc new_callback) {
 	glutKeyboardFunc(new_callback);
 }
 
-void oglSwapBuffers(STATE_T * state)
-{
+void oglSwapBuffers(STATE_T * state) {
 	glutSwapBuffers();
 }
 
-void oglMainLoop()
-{
+void oglMainLoop() {
 	glutMainLoop();
 }
 
-void oglLeaveMainLoop()
-{
+void oglLeaveMainLoop() {
 	glutLeaveMainLoop();
 }
 
-void oglfinish(STATE_T * state)
-{
+void oglfinish(STATE_T * state) {
 	vgDestroyContextSH();
 	glutDestroyWindow((int)state->platform);
 }
 
-
-int oglNoError()
-{
+int oglNoError() {
 	return glGetError() == GL_NO_ERROR;
 }
 
-
-void
-callbackIdle(void)
-{
-   glutPostRedisplay();
+void callbackIdle(void) {
+	glutPostRedisplay();
 }
-
-
 
 // oglinit sets the display, OpenVGL context and screen information
 // state holds the display information
@@ -84,8 +68,7 @@ void oglinit(int *pargc, char **argv, STATE_T * state) {
 
 	glutInit(pargc, argv);
 
-	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA |
-		       GLUT_STENCIL | GLUT_MULTISAMPLE);
+	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_STENCIL | GLUT_MULTISAMPLE);
 
 	state->screen_width = glutGet(GLUT_SCREEN_WIDTH);
 	state->screen_height = glutGet(GLUT_SCREEN_HEIGHT);
@@ -121,10 +104,10 @@ void oglinit(int *pargc, char **argv, STATE_T * state) {
 // max (screen_width-1,screen_height-1). i.e. at least one pixel must be
 // on the screen.
 void dispmanMoveWindow(STATE_T * state, int x, int y) {
-	glutPositionWindow(x,y);
+	glutPositionWindow(x, y);
 	state->window_x = glutGet(GLUT_WINDOW_X);
 	state->window_y = glutGet(GLUT_WINDOW_Y);
-	
+
 }
 
 // dispmanChangeWindowOpacity changes the window's opacity
